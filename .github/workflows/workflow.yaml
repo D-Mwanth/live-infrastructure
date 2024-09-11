@@ -1,0 +1,63 @@
+name: Terragrunt CI 🚀
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      working-directory:
+        description: 'The working directory for Terragrunt'
+        required: true
+        default: './dev'
+
+jobs:
+  terragrunt:
+    name: Terragrunt Execution
+    runs-on: ubuntu-latest
+    
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.IAM_ROLE_ARN }}
+        aws-region: eu-north-1
+        
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.9.4
+  
+    # We could use a pre-built action, but Terragrunt is a lightweight package that installs quickly
+    - name: Install Terragrunt
+      run: |
+        curl -LO https://github.com/gruntwork-io/terragrunt/releases/download/v0.62.3/terragrunt_linux_amd64
+        chmod u+x terragrunt_linux_amd64
+        sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
+
+    - name: Set up SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+    - name: Determine Work-Directory
+      id: set-dir
+      run: |
+        if [ "${{ github.event_name }}" == "push" ]; then
+          echo "WORKING_DIRECTORY=./" >> $GITHUB_ENV
+        else
+          echo "WORKING_DIRECTORY=${{ github.event.inputs['working-directory'] }}" >> $GITHUB_ENV
+        fi
+
+    - name: Terragrunt Apply
+      run: terragrunt run-all apply --auto-approve --terragrunt-non-interactive
+      working-directory: ${{ env.WORKING_DIRECTORY }}
