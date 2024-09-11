@@ -58,6 +58,6 @@ jobs:
           echo "WORKING_DIRECTORY=${{ github.event.inputs['working-directory'] }}" >> $GITHUB_ENV
         fi
 
-    - name: Terragrunt Apply
-      run: terragrunt run-all apply --auto-approve --terragrunt-non-interactive
+    - name: Terragrunt Destroy
+      run: terragrunt run-all destroy --auto-approve --terragrunt-non-interactive
       working-directory: ${{ env.WORKING_DIRECTORY }}
