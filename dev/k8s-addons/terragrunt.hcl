@@ -1,5 +1,5 @@
 terraform {
-  source = "git@github.com:D-Mwanth/infrastructure-modules.git//k8s-addons?ref=k8s-addons-v0.0.1"
+  source = "git@github.com:D-Mwanth/infrastructure-modules.git//k8s-addons?ref=k8s-addons-v0.0.2"
 }
 
 include "root" {
